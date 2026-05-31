@@ -1,0 +1,11 @@
+n8n_data/
+db.sqlite3
+staticfiles/
+frontend/node_modules/
+frontend/.next/
+*.pyc
+__pycache__/
+credentials/*.json
+.env
+.claude/
+docs

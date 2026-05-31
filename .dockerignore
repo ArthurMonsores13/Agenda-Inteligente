@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.git/
+.claude/
+n8n_data/
+frontend/node_modules/
+frontend/.next/
+db.sqlite3

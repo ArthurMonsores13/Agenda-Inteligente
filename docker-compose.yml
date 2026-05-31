@@ -1,0 +1,94 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: agenda-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - DJANGO_DB_NAME=/app/data/db.sqlite3
+      - GSHEETS_SPREADSHEET_ID=${GSHEETS_SPREADSHEET_ID}
+      - GSHEETS_WORKSHEET_NAME=${GSHEETS_WORKSHEET_NAME}
+      - GSHEETS_CREDENTIALS_PATH=${GSHEETS_CREDENTIALS_PATH}
+      - GSHEETS_PUBLIC_CSV_URL=${GSHEETS_PUBLIC_CSV_URL}
+      - N8N_WEBHOOK_TIMEOUT=${N8N_WEBHOOK_TIMEOUT}
+      - N8N_WEBHOOK_APPOINTMENT_CREATE=${N8N_WEBHOOK_APPOINTMENT_CREATE}
+      - N8N_WEBHOOK_APPOINTMENT_UPDATE=${N8N_WEBHOOK_APPOINTMENT_UPDATE}
+      - N8N_WEBHOOK_APPOINTMENT_DELETE=${N8N_WEBHOOK_APPOINTMENT_DELETE}
+      - N8N_WEBHOOK_APPOINTMENT_FINALIZE=${N8N_WEBHOOK_APPOINTMENT_FINALIZE}
+    volumes:
+      - agenda_backend_data:/app/data
+      - ./credentials:/app/credentials:ro
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agenda-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - backend
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n-local
+    restart: unless-stopped
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      - TZ=${GENERIC_TIMEZONE}
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - N8N_EDITOR_BASE_URL=${N8N_EDITOR_BASE_URL}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - DB_TYPE=sqlite
+      - DB_SQLITE_VACUUM_ON_STARTUP=true
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+
+  evolution-api:
+    image: atendai/evolution-api:latest
+    container_name: evo-test
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API}
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://evolution:evolution123@postgres:5432/evolution
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15
+    container_name: evolution-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=evolution
+      - POSTGRES_PASSWORD=evolution123
+      - POSTGRES_DB=evolution
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+  agenda_backend_data:
+  frontend_node_modules:
