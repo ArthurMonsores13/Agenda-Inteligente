@@ -9,4 +9,4 @@ credentials/*.json
 .env
 .claude/
 docs
-credentials
+credentials/
