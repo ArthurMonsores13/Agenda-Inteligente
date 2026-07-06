@@ -73,7 +73,7 @@ services:
     environment:
       - AUTHENTICATION_API_KEY=${EVOLUTION_API}
       - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://evolution:evolution123@postgres:5432/evolution
+      - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     depends_on:
       - postgres
 
@@ -82,9 +82,9 @@ services:
     container_name: evolution-postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=evolution
-      - POSTGRES_PASSWORD=evolution123
-      - POSTGRES_DB=evolution
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
